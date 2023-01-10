@@ -1,0 +1,6 @@
+build/
+bin/Debug/*
+bin/Release/*
+extern/
+res/*.obj
+vs*
