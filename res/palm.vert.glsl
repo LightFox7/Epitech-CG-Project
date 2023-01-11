@@ -18,6 +18,5 @@ layout (std430, binding = 1) buffer transformLayout
 
 void main()
 {
-    vec3 finalPos = vec3(position + transforms[gl_InstanceID].xyz);
-    gl_Position = modelViewProjection * vec4(finalPos, 1.);
+    gl_Position = modelViewProjection * vec4(position + transforms[gl_InstanceID].xyz, transforms[gl_InstanceID].w);
 }

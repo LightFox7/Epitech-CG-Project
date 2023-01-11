@@ -3,10 +3,11 @@
 #include "Entity.hpp"
 #include "Shader.hpp"
 
-class Palms : public Entity
+class Desert : public Entity
 {
 public:
-    Palms() {
+    Desert()
+    {
         this->VAO = 0;
         this->VBO = 0;
         this->IBO = 0;
@@ -15,7 +16,7 @@ public:
         this->indexCount = 0;
         this->palmCount = 0;
     }
-    ~Palms() {}
+    ~Desert() {}
     bool Load() override;
     void Destroy() override;
     void Draw() override;

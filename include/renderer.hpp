@@ -1,7 +1,7 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
 
-#include "Palms.hpp"
+#include "Entity.hpp"
 
 BEGIN_VISUALIZER_NAMESPACE
 
@@ -32,17 +32,13 @@ public:
     void UpdateCamera();
 
 private:
-    GLuint m_UBO, m_VBO, m_IBO, m_VAO, m_ShaderProgram;
-
-    uint32_t m_IndexCount;
-
+    GLuint m_UBO;
     glm::mat4* m_UBOData;
 
     std::shared_ptr<Camera> m_Camera;
     uint32_t m_ViewportWidth, m_ViewportHeight;
 
-    std::vector<Entity> entities;
-    Palms test;
+    std::vector<std::shared_ptr<Entity>> entities;
 };
 
 END_VISUALIZER_NAMESPACE

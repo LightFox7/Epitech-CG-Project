@@ -1,4 +1,5 @@
 
+#pragma once
 #include "Palms.hpp"
 
 #pragma warning(push, 0)
@@ -7,7 +8,7 @@
 #include <glm/gtc/constants.hpp>
 #pragma warning(pop, 0)
 
-#include "OBJ_Loader.h"
+#include "OBJ_Loader.hpp"
 
 struct PalmVertex {
 	glm::vec3 position;
@@ -27,18 +28,41 @@ bool Palms::Load()
 	// Fill vertices
 	std::vector<PalmVertex> vertices;
 	std::vector<uint32_t> indices;
-	for (auto it : mesh.Vertices) {
+	for (auto const& it : mesh.Vertices) {
 		vertices.push_back({ glm::vec3(it.Position.X, it.Position.Y, it.Position.Z), glm::vec3(it.Normal.X, it.Normal.Y, it.Normal.Z) });
 	}
-	for (auto it : mesh.Indices) {
+	for (auto const& it : mesh.Indices) {
 		indices.push_back(it);
 	}
 	this->indexCount = (uint32_t)indices.size();
 
-	// TODO Load transforms
+	// Load transforms
 	std::vector<glm::vec4> transforms;
-	transforms.push_back(glm::vec4(25, 25, 25, 1));
-	transforms.push_back(glm::vec4(0, 0, 0, 1));
+	std::ifstream transfoFile;
+	std::string line;
+	transfoFile.exceptions(std::ifstream::badbit);
+	try {
+		// Open files
+		transfoFile.open("../../res/palmTransfo.txt");
+		// Read file's buffer contents into streams
+		std::getline(transfoFile, line);
+		std::istringstream ss(line);
+		ss >> palmCount;
+		std::cout << palmCount << std::endl;
+		while (std::getline(transfoFile, line)) {
+			ss = std::istringstream(line);
+			glm::vec4 vec;
+			ss >> vec.x >> vec.y >> vec.z >> vec.w;
+			transforms.push_back(vec);
+		}
+		// close file handler
+		transfoFile.close();
+	}
+	catch (std::ifstream::failure e)
+	{
+		std::cout << "ERROR::TRANSFORMS::FILE_NOT_SUCCESFULLY_READ: " << "palmTransfo.txt" << std::endl;
+		return false;
+	}
 
 	// Allocate and init buffers
 	glCreateBuffers(1, &VBO);
@@ -86,7 +110,7 @@ void Palms::Draw()
 	shader.Use();
 	glBindVertexArray(VAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
-	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, 30);
+	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, palmCount);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);

@@ -4,7 +4,7 @@ class Entity
 {
 public:
     virtual ~Entity() = default;
-    virtual bool Load() { return true; }
-    virtual void Destroy() {};
-    virtual void Draw() {};
+    virtual bool Load() = 0;
+    virtual void Destroy() = 0;
+    virtual void Draw() = 0;
 };
