@@ -12,16 +12,20 @@ public:
         this->IBO = 0;
         this->SSBO = 0;
         this->shader = Shader();
+        this->shadowShader = Shader();
         this->indexCount = 0;
         this->palmCount = 0;
     }
     ~Palms() {}
     bool Load() override;
     void Destroy() override;
-    void Draw() override;
+    void Render() override;
+    void RenderShadows() override;
 
 private:
     GLuint VAO, VBO, IBO, SSBO;
     uint32_t indexCount, palmCount;
     Shader shader;
+    // Shader for shadow mapping
+    Shader shadowShader;
 };

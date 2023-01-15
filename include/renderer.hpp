@@ -7,6 +7,24 @@ BEGIN_VISUALIZER_NAMESPACE
 
 class Camera;
 
+struct UBOData {
+    glm::mat4 viewProjectionMatrix;
+    glm::mat4 viewMatrix;
+    glm::mat4 projectionMatrix;
+    glm::vec4 lightPos;
+    glm::vec4 lightDir;
+    glm::vec4 lightDirViewSpace;
+    glm::vec4 ambiant;
+    glm::vec4 diffuse;
+};
+
+// Light data for shadow mapping
+struct LightUBOData {
+    glm::mat4 lightProjectionMatrix;
+    glm::mat4 lightViewMatrix;
+    glm::mat4 lightViewProjectionMatrix;
+};
+
 class Renderer
 {
 public:
@@ -32,12 +50,15 @@ public:
     void UpdateCamera();
 
 private:
-    GLuint m_UBO;
-    glm::mat4* m_UBOData;
-
     std::shared_ptr<Camera> m_Camera;
     uint32_t m_ViewportWidth, m_ViewportHeight;
 
+    // Custom variables
+    GLuint m_UBO, m_LightUBO, m_depthMapFBO, m_depthMapTexture;
+    UBOData* m_UBOData;
+    LightUBOData* m_LightUBOData;
+ 
+    // Entities to render
     std::vector<std::shared_ptr<Entity>> entities;
 };
 

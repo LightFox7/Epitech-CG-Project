@@ -78,7 +78,6 @@ public:
         GLchar infoLog[512];
         // Link program
         this->program = glCreateProgram();
-        std::cout << "shader count: " << shaders.size() << std::endl;
         for (auto it: shaders)
             glAttachShader(program, it);
         glLinkProgram(program);

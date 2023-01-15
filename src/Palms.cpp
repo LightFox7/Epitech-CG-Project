@@ -17,13 +17,21 @@ struct PalmVertex {
 
 bool Palms::Load()
 {
+	// Load shaders
+	if (!shader.LoadShader("../../res/palm.vert.glsl", GL_VERTEX_SHADER) ||
+		!shader.LoadShader("../../res/palm.frag.glsl", GL_FRAGMENT_SHADER) ||
+		!shader.LinkProgram())
+		return false;
+	if (!shadowShader.LoadShader("../../res/palm_shadow.vert.glsl", GL_VERTEX_SHADER) ||
+		!shadowShader.LoadShader("../../res/palm_shadow.frag.glsl", GL_FRAGMENT_SHADER) ||
+		!shadowShader.LinkProgram())
+		return false;
 	// Load obj file
 	objl::Loader loader;
 	loader.LoadFile("../../res/palm.obj");
 	if (loader.LoadedMeshes.size() < 1)
 		return false;
 	objl::Mesh mesh = loader.LoadedMeshes[0];
-	std::cout << "loaded palm with " << mesh.Vertices.size() << " vertices and " << mesh.Indices.size() << " indices " << std::endl;
 
 	// Fill vertices
 	std::vector<PalmVertex> vertices;
@@ -48,7 +56,6 @@ bool Palms::Load()
 		std::getline(transfoFile, line);
 		std::istringstream ss(line);
 		ss >> palmCount;
-		std::cout << palmCount << std::endl;
 		while (std::getline(transfoFile, line)) {
 			ss = std::istringstream(line);
 			glm::vec4 vec;
@@ -86,14 +93,6 @@ bool Palms::Load()
 	glVertexArrayAttribBinding(VAO, 1, 0);
 	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
 	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
-
-	// Load shader
-	if (!shader.LoadShader("../../res/palm.vert.glsl", GL_VERTEX_SHADER))
-		return false;
-	if (!shader.LoadShader("../../res/palm.frag.glsl", GL_FRAGMENT_SHADER))
-		return false;
-	if (shader.LinkProgram() == false)
-		return false;
 	return true;
 }
 
@@ -104,10 +103,10 @@ void Palms::Destroy()
 	glDeleteBuffers(1, &SSBO);
 }
 
-void Palms::Draw()
+void Palms::Render()
 {
+	this->shader.Use();
 	glDisable(GL_CULL_FACE);
-	shader.Use();
 	glBindVertexArray(VAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
 	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, palmCount);
@@ -116,3 +115,15 @@ void Palms::Draw()
 	glUseProgram(0);
 	glEnable(GL_CULL_FACE);
 }
+
+void Palms::RenderShadows()
+{
+	this->shadowShader.Use();
+	glBindVertexArray(VAO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
+	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, palmCount);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+}
+
