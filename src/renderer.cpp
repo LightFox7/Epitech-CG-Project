@@ -29,7 +29,7 @@ bool Renderer::Initialize()
     uboData.lightDir = glm::normalize(-uboData.lightPos);
     uboData.lightDirViewSpace = uboData.viewMatrix * uboData.lightDir;
     uboData.ambiant = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-    uboData.diffuse = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+    uboData.diffuse = glm::vec4(0.9f, 0.9f, 0.9f, 1.0f);
 
     glCreateBuffers(1, &m_UBO);
     glNamedBufferStorage(m_UBO, sizeof(UBOData), &uboData, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
@@ -132,6 +132,7 @@ void Renderer::UpdateViewport(uint32_t width, uint32_t height)
     m_UBOData->viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
     m_UBOData->viewMatrix = m_Camera->GetViewMatrix();
     m_UBOData->projectionMatrix = m_Camera->GetProjectionMatrix();
+    m_UBOData->lightDirViewSpace = m_UBOData->viewMatrix * m_UBOData->lightDir;
 
     GL_CALL(glFlushMappedNamedBufferRange, m_UBO, 0, sizeof(UBOData));
 }
@@ -141,6 +142,7 @@ void Renderer::UpdateCamera()
     m_UBOData->viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
     m_UBOData->viewMatrix = m_Camera->GetViewMatrix();
     m_UBOData->projectionMatrix = m_Camera->GetProjectionMatrix();
+    m_UBOData->lightDirViewSpace = m_UBOData->viewMatrix * m_UBOData->lightDir;
 
     GL_CALL(glFlushMappedNamedBufferRange, m_UBO, 0, sizeof(UBOData));
 }

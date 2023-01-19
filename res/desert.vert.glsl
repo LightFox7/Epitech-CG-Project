@@ -10,6 +10,7 @@ layout (location = 0) out smooth vec3 fragPos;
 layout (location = 1) out smooth vec3 fragNormal;
 layout (location = 2) out smooth vec2 fragUv;
 layout (location = 3) out smooth vec4 fragPosLightSpace;
+layout (location = 4) out vec3 eyeVec;
 
 // Uniforms
 layout(std140, binding = 0) uniform uniformLayout
@@ -38,4 +39,5 @@ void main()
     fragNormal = normal;
     fragUv = uv;
     fragPosLightSpace = lightViewProjectionMatrix * vec4(finalPos, 1.0);
+    eyeVec = -normalize((viewMatrix * vec4(position, 1.0)).xyz);
 }
