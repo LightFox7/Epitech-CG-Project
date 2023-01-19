@@ -1,9 +1,9 @@
 #version 450 core
 
 // input
-layout (location = 0) in vec3 fragPos;
-layout (location = 1) in vec3 fragNormal;
-layout (location = 2) in vec2 fragUv;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 uv;
 
 // Output
 layout (location = 0) out vec4 color;
@@ -14,7 +14,6 @@ layout(std140, binding = 0) uniform uniformLayout
     mat4 viewProjectionMatrix;
     mat4 viewMatrix;
     mat4 projectionMatrix;
-    vec4 lightPos;
     vec4 lightDir;
     vec4 lightDirViewSpace;
     vec4 ambiant;
@@ -61,11 +60,11 @@ float computeShadows(vec4 fragPosLightSpace, float dotLightNormal)
 
 void main()
 {
-    vec4 fragPosLightSpace = lightViewProjectionMatrix * vec4(fragPos, 1.0);
+    vec4 fragPosLightSpace = lightViewProjectionMatrix * vec4(position, 1.0);
     // Set material color function of uvs (if both are 0: those are leaves, else, it is the trunk)
     vec3 materialColor = vec3(0.2, 0.9, 0.2);
-    if (fragUv.x != 0 || fragUv.y != 0) materialColor = vec3(0.6, 0.4, 0.3); 
-    vec3 norm = gl_FrontFacing ? normalize(fragNormal) : normalize(-fragNormal);
+    if (uv.x != 0 || uv.y != 0) materialColor = vec3(0.6, 0.4, 0.3); 
+    vec3 norm = gl_FrontFacing ? normalize(normal) : normalize(-normal);
     float lambertTerm = max(dot(norm, -lightDir.xyz), 0.0);
     vec3 diffLight = lambertTerm * diffuse.xyz;
     // Compute shadows

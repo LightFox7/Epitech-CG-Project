@@ -11,7 +11,6 @@ struct UBOData {
     glm::mat4 viewProjectionMatrix;
     glm::mat4 viewMatrix;
     glm::mat4 projectionMatrix;
-    glm::vec4 lightPos;
     glm::vec4 lightDir;
     glm::vec4 lightDirViewSpace;
     glm::vec4 ambiant;

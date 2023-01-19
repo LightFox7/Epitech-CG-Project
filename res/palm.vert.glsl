@@ -15,7 +15,6 @@ layout(std140, binding = 0) uniform uniformLayout
     mat4 viewProjectionMatrix;
     mat4 viewMatrix;
     mat4 projectionMatrix;
-    vec4 lightPos;
     vec4 lightDir;
     vec4 lightDirViewSpace;
     vec4 ambiant;

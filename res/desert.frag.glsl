@@ -1,11 +1,9 @@
 #version 450 core
 
 // Input
-layout (location = 0) in smooth vec3 position;
-layout (location = 1) in smooth vec3 normal;
-layout (location = 2) in smooth vec2 uv;
-layout (location = 3) in smooth vec4 fragPosLightSpace;
-layout (location = 4) in vec3 eyeVec;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 uv;
 
 // Output
 layout (location = 0) out vec4 color;
@@ -16,7 +14,6 @@ layout(std140, binding = 0) uniform uniformLayout
     mat4 viewProjectionMatrix;
     mat4 viewMatrix;
     mat4 projectionMatrix;
-    vec4 lightPos;
     vec4 lightDir;
     vec4 lightDirViewSpace;
     vec4 ambiant;
@@ -59,7 +56,7 @@ float voronoise(vec2 p, float u, float v )
     return a.x/a.y;
 }
 
-float computeShadows(float dotLightNormal)
+float computeShadows(vec4 fragPosLightSpace, float dotLightNormal)
 {
     // Convert from [-1, 1] to [0, 1] range
     vec3 projCoords = (fragPosLightSpace.xyz / fragPosLightSpace.w) * 0.5 + 0.5;
@@ -84,6 +81,9 @@ float computeShadows(float dotLightNormal)
 
 void main()
 {
+    vec4 fragPosLightSpace = lightViewProjectionMatrix * vec4(position, 1.0);
+    vec3 eyeVec = -normalize((viewMatrix * vec4(position, 1.0)).xyz);
+
     vec2 texCoord = uv - vec2(int(uv.x), int(uv.y));
     if (texCoord.x < 0) texCoord.x = 1 + texCoord.x;
     if (texCoord.y < 0) texCoord.y = 1 + texCoord.y;
@@ -99,7 +99,7 @@ void main()
     vec3 r = reflect(lightDirViewSpace.xyz, norm);
     vec3 specularLight = vec3(1.0) * pow(max(dot(r, eyeVec), 0.0), 100.0);
     // Compute shadows
-    float shadow = computeShadows(lambertTerm);
+    float shadow = computeShadows(fragPosLightSpace, lambertTerm);
     vec3 finalColor = ((1.0 - shadow) * (diffLight + specularLight) + ambiant.xyz) * materialColor;
     color = vec4(finalColor, 1.0);
 }

@@ -27,8 +27,7 @@ bool Renderer::Initialize()
     uboData.viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
     uboData.projectionMatrix = m_Camera->GetProjectionMatrix();
     uboData.viewMatrix = m_Camera->GetViewMatrix();
-    uboData.lightPos = glm::vec4(lightPos, 0.0f);
-    uboData.lightDir = glm::normalize(-uboData.lightPos);
+    uboData.lightDir = glm::normalize(glm::vec4(-lightPos, 0));
     uboData.lightDirViewSpace = uboData.viewMatrix * uboData.lightDir;
     uboData.ambiant = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
     uboData.diffuse = glm::vec4(0.9f, 0.9f, 0.9f, 1.0f);
