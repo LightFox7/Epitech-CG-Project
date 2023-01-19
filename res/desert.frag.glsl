@@ -89,7 +89,8 @@ void main()
     if (texCoord.y < 0) texCoord.y = 1 + texCoord.y;
     // Set material color
     vec3 materialColor = vec3(1.0, 0.95, 0.05);
-    float noise = voronoise(texCoord * 24, texCoord.x, texCoord.y);
+    float noise = voronoise(texCoord * 64, 0.5, 0.5);
+    materialColor = materialColor * (0.9 + noise * 0.3);
     // Compute diffuse lighting
     vec3 norm = normalize(normal);
     float lambertTerm = max(dot(norm, -lightDir.xyz), 0.0);
