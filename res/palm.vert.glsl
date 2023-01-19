@@ -3,10 +3,11 @@
 // input vertex attributes
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
+layout (location = 2) in vec2 uv;
 
-layout (location = 0) out smooth vec3 fragPos;
-layout (location = 1) out smooth vec3 fragNormal;
-layout (location = 2) out smooth vec4 fragPosLightSpace;
+layout (location = 0) out vec3 fragPos;
+layout (location = 1) out vec3 fragNormal;
+layout (location = 2) out vec2 fragUv;
 
 // Uniforms
 layout(std140, binding = 0) uniform uniformLayout
@@ -40,5 +41,5 @@ void main()
 
     fragPos = finalPos;
     fragNormal = normal;
-    fragPosLightSpace = lightViewProjectionMatrix * vec4(finalPos, 1.0);
+    fragUv = uv;
 }

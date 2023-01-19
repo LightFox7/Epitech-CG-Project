@@ -13,6 +13,7 @@
 struct PalmVertex {
 	glm::vec3 position;
 	glm::vec3 normal;
+	glm::vec2 uvs;
 };
 
 bool Palms::Load()
@@ -37,7 +38,11 @@ bool Palms::Load()
 	std::vector<PalmVertex> vertices;
 	std::vector<uint32_t> indices;
 	for (auto const& it : mesh.Vertices) {
-		vertices.push_back({ glm::vec3(it.Position.X, it.Position.Y, it.Position.Z), glm::vec3(it.Normal.X, it.Normal.Y, it.Normal.Z) });
+		vertices.push_back({
+			glm::vec3(it.Position.X, it.Position.Y, it.Position.Z),
+			glm::vec3(it.Normal.X, it.Normal.Y, it.Normal.Z),
+			glm::vec2(it.TextureCoordinate.X, it.TextureCoordinate.Y),
+		});
 	}
 	for (auto const& it : mesh.Indices) {
 		indices.push_back(it);
@@ -89,10 +94,13 @@ bool Palms::Load()
 	// Define Attributes
 	glEnableVertexArrayAttrib(VAO, 0);
 	glEnableVertexArrayAttrib(VAO, 1);
+	glEnableVertexArrayAttrib(VAO, 2);
 	glVertexArrayAttribBinding(VAO, 0, 0);
 	glVertexArrayAttribBinding(VAO, 1, 0);
+	glVertexArrayAttribBinding(VAO, 2, 0);
 	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
 	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+	glVertexArrayAttribFormat(VAO, 2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) * 2);
 	return true;
 }
 

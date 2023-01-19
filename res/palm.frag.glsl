@@ -1,9 +1,9 @@
 #version 450 core
 
 // input
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in smooth vec4 fragPosLightSpace;
+layout (location = 0) in vec3 fragPos;
+layout (location = 1) in vec3 fragNormal;
+layout (location = 2) in vec2 fragUv;
 
 // Output
 layout (location = 0) out vec4 color;
@@ -35,7 +35,7 @@ layout (std430, binding = 1) buffer transformLayout
 // ShadowMap
 layout (binding = 0) uniform sampler2D shadowMap;
 
-float computeShadows(float dotLightNormal)
+float computeShadows(vec4 fragPosLightSpace, float dotLightNormal)
 {
     // Convert from [-1, 1] to [0, 1] range
     vec3 projCoords = (fragPosLightSpace.xyz / fragPosLightSpace.w) * 0.5 + 0.5;
@@ -61,12 +61,15 @@ float computeShadows(float dotLightNormal)
 
 void main()
 {
-    vec3 materialColor = abs(normal);
-    vec3 norm = gl_FrontFacing ? normalize(normal) : normalize(-normal);
+    vec4 fragPosLightSpace = lightViewProjectionMatrix * vec4(fragPos, 1.0);
+    // Set material color function of uvs (if both are 0: those are leaves, else, it is the trunk)
+    vec3 materialColor = vec3(0.2, 0.9, 0.2);
+    if (fragUv.x != 0 || fragUv.y != 0) materialColor = vec3(0.6, 0.4, 0.3); 
+    vec3 norm = gl_FrontFacing ? normalize(fragNormal) : normalize(-fragNormal);
     float lambertTerm = max(dot(norm, -lightDir.xyz), 0.0);
     vec3 diffLight = lambertTerm * diffuse.xyz;
     // Compute shadows
-    float shadow = computeShadows(lambertTerm);
+    float shadow = computeShadows(fragPosLightSpace, lambertTerm);
     vec3 finalColor = ((1.0 - shadow) * (diffLight) + ambiant.xyz) * materialColor;
     color = vec4(finalColor, 1.);
 }
