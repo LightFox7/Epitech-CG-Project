@@ -11,10 +11,13 @@ public:
         this->VBO = 0;
         this->IBO = 0;
         this->SSBO = 0;
-        this->shader = Shader();
-        this->shadowShader = Shader();
+        this->SSBO2 = 0;
         this->indexCount = 0;
         this->palmCount = 0;
+        this->transformsSize = 0;
+        this->shader = Shader();
+        this->shadowShader = Shader();
+        this->computeShader = Shader();
     }
     ~Palms() {}
     bool Load() override;
@@ -23,9 +26,12 @@ public:
     void RenderShadows() override;
 
 private:
-    GLuint VAO, VBO, IBO, SSBO;
+    // SSBO for transforms, SSBO2 for culling
+    GLuint VAO, VBO, IBO, SSBO, SSBO2;
     uint32_t indexCount, palmCount;
+    std::size_t transformsSize;
     Shader shader;
     // Shader for shadow mapping
     Shader shadowShader;
+    Shader computeShader;
 };

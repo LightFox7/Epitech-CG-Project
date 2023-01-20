@@ -26,8 +26,9 @@ layout(std140, binding = 1) uniform lightLayout {
 };
 
 // SSBO
-layout (std430, binding = 1) buffer transformLayout
+layout (std430, binding = 0) buffer transformLayout
 {
+    ivec4 indexCount;
     vec4 transforms[];
 };
 
