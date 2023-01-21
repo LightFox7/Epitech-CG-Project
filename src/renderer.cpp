@@ -51,7 +51,7 @@ bool Renderer::Initialize()
     m_LightUBOData = (LightUBOData*)glMapNamedBufferRange(m_LightUBO, 0, sizeof(LightUBOData),
         GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 
-    Frustum frustum = createFrustumFromCamera(*m_Camera);
+    Frustum frustum = GenerateFrustumFromMainCam();
     glCreateBuffers(1, &frustumUBO);
     glNamedBufferStorage(frustumUBO, sizeof(Frustum), &frustum, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
     frustumUBOData = (Frustum*)glMapNamedBufferRange(frustumUBO, 0, sizeof(Frustum),
@@ -155,7 +155,7 @@ void Renderer::UpdateCamera()
     m_LightUBOData->lightViewProjectionMatrix = m_LightUBOData->lightProjectionMatrix * m_LightUBOData->lightViewMatrix;
     GL_CALL(glFlushMappedNamedBufferRange, m_LightUBO, 0, sizeof(LightUBOData));
 
-    *frustumUBOData = createFrustumFromCamera(*m_Camera);
+    *frustumUBOData = GenerateFrustumFromMainCam();
     GL_CALL(glFlushMappedNamedBufferRange, frustumUBO, 0, sizeof(Frustum));
 }
 

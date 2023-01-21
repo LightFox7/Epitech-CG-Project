@@ -48,10 +48,11 @@ bool isOnOrForwardPlane(vec4 plane, vec3 center, float radius)
 
 bool isOnFrustum(vec3 center, float radius)
 {
-//         isOnOrForwardPlane(farFace, center, radius) &&
+//         
     return (isOnOrForwardPlane(leftFace, center, radius) &&
         isOnOrForwardPlane(rightFace, center, radius) &&
         isOnOrForwardPlane(nearFace, center, radius) &&
+        isOnOrForwardPlane(farFace, center, radius) &&
         isOnOrForwardPlane(topFace, center, radius) &&
         isOnOrForwardPlane(bottomFace, center, radius));
 };
