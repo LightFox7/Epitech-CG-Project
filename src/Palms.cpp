@@ -234,7 +234,7 @@ void Palms::Render()
 	this->computeShader.Use();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
-	glDispatchCompute(64, 64, 1);
+	glDispatchCompute(64, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
@@ -243,7 +243,6 @@ void Palms::Render()
 	// Render
 	uint32_t count = 0;
 	glGetNamedBufferSubData(SSBO2, 0, sizeof(uint32_t), &count);
-	std::cout << count << std::endl;
 	this->shader.Use();
 	glDisable(GL_CULL_FACE);
 	glBindVertexArray(VAO);
