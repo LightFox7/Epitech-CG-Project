@@ -17,11 +17,11 @@ struct PalmVertex {
 };
 
 typedef  struct {
-	uint32_t  count;
-	uint32_t  instanceCount;
-	uint32_t  firstIndex;
-	uint32_t  baseVertex;
-	uint32_t  baseInstance;
+	uint32_t count;
+	uint32_t instanceCount;
+	uint32_t firstIndex;
+	uint32_t baseVertex;
+	uint32_t baseInstance;
 } DrawElementsIndirectCommand;
 
 void GenerateSphere(std::vector<PalmVertex>& vertices, std::vector<uint32_t>& indices, uint16_t stackCount, uint16_t sectorCount, float radius)
@@ -171,7 +171,9 @@ bool Palms::Load()
 	glCreateBuffers(1, &SSBO2);
 	glNamedBufferStorage(SSBO2, sizeof(uint32_t) * ((uint32_t)palmCount + 1), nullptr, GL_DYNAMIC_STORAGE_BIT);
 	glCreateBuffers(1, &indirectBuffer);
-	glNamedBufferStorage(indirectBuffer, sizeof(DrawElementsIndirectCommand), nullptr, 0);
+	DrawElementsIndirectCommand cmd = { 0, 0, 0, 0, 0 };
+	cmd.count = indexCount;
+	glNamedBufferStorage(indirectBuffer, sizeof(DrawElementsIndirectCommand), &cmd, 0);
 	// Set data to VAO
     // Init VAO
 	glCreateVertexArrays(1, &VAO);
@@ -234,28 +236,31 @@ void Palms::Render()
 	this->computeShader.Use();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indirectBuffer);
 	glDispatchCompute(64, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
 	glUseProgram(0);
 
 	// Render
-	uint32_t count = 0;
-	glGetNamedBufferSubData(SSBO2, 0, sizeof(uint32_t), &count);
 	this->shader.Use();
 	glDisable(GL_CULL_FACE);
 	glBindVertexArray(VAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
-	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, count);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+	glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
 	glEnable(GL_CULL_FACE);
 
 	// Display sphere
+	/*
 	this->wireframeShader.Use();
 	glBindVertexArray(VAO2);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
@@ -267,6 +272,7 @@ void Palms::Render()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
+	*/
 }
 
 void Palms::RenderShadows()
