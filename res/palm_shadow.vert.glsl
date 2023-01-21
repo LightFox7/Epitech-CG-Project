@@ -16,6 +16,11 @@ layout (std430, binding = 0) buffer transformLayout
     ivec4 indexCount;
     vec4 transforms[];
 };
+layout (std430, binding = 1) buffer displayLayout
+{
+    uint displayCount;
+    uint displayIndices[];
+};
 
 void main()
 {

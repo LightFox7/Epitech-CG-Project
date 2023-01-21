@@ -169,9 +169,7 @@ bool Palms::Load()
 	glNamedBufferSubData(SSBO, 0, sizeof(glm::vec4), &palmCountV4);
 	glNamedBufferSubData(SSBO, sizeof(glm::vec4), sizeof(glm::vec4) * transforms.size(), &transforms.front());
 	glCreateBuffers(1, &SSBO2);
-	// uint32_t var = 0;
-	// glNamedBufferStorage(SSBO2, sizeof(uint32_t) * ((uint32_t)palmCount + 1), &var, GL_DYNAMIC_STORAGE_BIT);
-	// glNamedBufferSubData(SSBO2, 0, sizeof(uint32_t), &var);
+	glNamedBufferStorage(SSBO2, sizeof(uint32_t) * ((uint32_t)palmCount + 1), nullptr, GL_DYNAMIC_STORAGE_BIT);
 	glCreateBuffers(1, &indirectBuffer);
 	glNamedBufferStorage(indirectBuffer, sizeof(DrawElementsIndirectCommand), nullptr, 0);
 	// Set data to VAO
@@ -235,43 +233,25 @@ void Palms::Render()
 	// Culling pass
 	this->computeShader.Use();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
-	glDispatchCompute(palmCount, 1, 1);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
+	glDispatchCompute(64, 64, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glUseProgram(0);
 
 	// Render
-	// Set draw command
-	std::vector<glm::vec4> transforms;
-	transforms.resize(palmCount);
-	glGetNamedBufferSubData(SSBO, sizeof(glm::vec4), palmCount * sizeof(glm::vec4), &transforms.front());
-	std::vector<DrawElementsIndirectCommand> cmds;
-	DrawElementsIndirectCommand curCmd = { 0, 0, 0, 0, 0 };
-	for (size_t i = 0; i < transforms.size(); i++) {
-		if (transforms[i].w == 0.0 && curCmd.instanceCount > 0) {
-			cmds.push_back(curCmd);
-			curCmd = { 0, 0, 0, 0, 0 };
-		} 
-		else if (transforms[i].w != 0.0 && curCmd.instanceCount == 0) {
-			curCmd.count = indexCount;
-			curCmd.baseInstance = (uint32_t)i;
-			curCmd.instanceCount++;
-		}
-		else if (transforms[i].w != 0.0) { curCmd.instanceCount++; }
-	}
-	if (curCmd.instanceCount > 0)
-		cmds.push_back(curCmd);
+	uint32_t count = 0;
+	glGetNamedBufferSubData(SSBO2, 0, sizeof(uint32_t), &count);
+	std::cout << count << std::endl;
 	this->shader.Use();
 	glDisable(GL_CULL_FACE);
 	glBindVertexArray(VAO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
-	
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
-	glNamedBufferSubData(indirectBuffer, 0, sizeof(DrawElementsIndirectCommand) * cmds.size(), cmds.data());
-	glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-	//glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, palmCount);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
+	glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr, count);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
 	glEnable(GL_CULL_FACE);
@@ -280,10 +260,12 @@ void Palms::Render()
 	this->wireframeShader.Use();
 	glBindVertexArray(VAO2);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDrawElementsInstanced(GL_TRIANGLES, sphereIndicesCount, GL_UNSIGNED_INT, nullptr, palmCount);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
 }

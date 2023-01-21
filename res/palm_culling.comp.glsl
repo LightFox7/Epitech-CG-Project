@@ -28,6 +28,11 @@ layout (std430, binding = 0) buffer transformLayout
     ivec4 indexCount;
     vec4 transforms[];
 };
+layout (std430, binding = 1) buffer displayLayout
+{
+    uint displayCount;
+    uint displayIndices[];
+};
 
 float getSignedDistanceToPlane(vec4 plane, vec3 point)
 {
@@ -53,10 +58,18 @@ bool isOnFrustum(vec3 center, float radius)
 
 void main()
 {
-	uint idx = gl_GlobalInvocationID.x;
-
-    float radius = 2.5;
-    vec3 center = transforms[idx].xyz + vec3(0, radius, 0);
-    bool onFrustum = isOnFrustum(center, radius);
-    transforms[idx].w = onFrustum ? 1.0 : 0.0;
+    if (gl_GlobalInvocationID.x == 0 && gl_GlobalInvocationID.y == 0 && gl_GlobalInvocationID.z == 0) { 
+        displayCount = 0,
+        indexCount.y = 0;
+    }
+    barrier();
+    uint idx = atomicAdd(indexCount.y, 1);
+    while (idx < indexCount.x) {
+        float radius = 2.5;
+        vec3 center = transforms[idx].xyz + vec3(0, radius, 0);
+        bool onFrustum = isOnFrustum(center, radius);
+        transforms[idx].w = onFrustum ? 1.0 : 0.0;
+        if (onFrustum) displayIndices[atomicAdd(displayCount, 1)] = idx;
+        idx = atomicAdd(indexCount.y, 1);
+    }
 }

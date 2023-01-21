@@ -33,10 +33,16 @@ layout (std430, binding = 0) buffer transformLayout
     ivec4 indexCount;
     vec4 transforms[];
 };
+layout (std430, binding = 1) buffer displayLayout
+{
+    uint displayCount;
+    uint displayIndices[];
+};
+
 
 void main()
 {
-    vec3 finalPos = position + transforms[gl_InstanceID].xyz;
+    vec3 finalPos = position + transforms[displayIndices[gl_InstanceID]].xyz;
     gl_Position = viewProjectionMatrix * vec4(finalPos, 1.0);
 
     fragPos = finalPos;

@@ -110,20 +110,6 @@ void Renderer::Render()
     for (auto it : entities) {
         it->Render();
     }
-
-    // Draw debug
-    glViewport((m_ViewportWidth * 3) / 4, (m_ViewportHeight * 3) / 4, (m_ViewportWidth * 1) / 4, (m_ViewportHeight * 1) / 4);
-    glScissor((m_ViewportWidth * 3) / 4, (m_ViewportHeight * 3) / 4, (m_ViewportWidth * 1) / 4, (m_ViewportHeight * 1) / 4);
-    glEnable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindTextureUnit(0, m_depthMapTexture);
-    // Draw all entities
-    for (auto it : entities) {
-        it->Render();
-    }
-    glDisable(GL_SCISSOR_TEST);
-    // Unbind
-    glBindTextureUnit(0, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, 0);
