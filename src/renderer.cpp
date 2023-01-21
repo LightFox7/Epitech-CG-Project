@@ -51,6 +51,12 @@ bool Renderer::Initialize()
     m_LightUBOData = (LightUBOData*)glMapNamedBufferRange(m_LightUBO, 0, sizeof(LightUBOData),
         GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 
+    Frustum frustum = createFrustumFromCamera(*m_Camera);
+    glCreateBuffers(1, &frustumUBO);
+    glNamedBufferStorage(frustumUBO, sizeof(Frustum), &frustum, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+    frustumUBOData = (Frustum*)glMapNamedBufferRange(frustumUBO, 0, sizeof(Frustum),
+        GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+
     // Add entities to list
     entities.push_back(std::make_shared<Palms>());
     entities.push_back(std::make_shared<Desert>());
@@ -78,17 +84,17 @@ bool Renderer::Initialize()
     glNamedFramebufferTexture(m_depthMapFBO, GL_DEPTH_ATTACHMENT, m_depthMapTexture, 0);
     glNamedFramebufferDrawBuffer(m_depthMapFBO, GL_NONE);
     glNamedFramebufferReadBuffer(m_depthMapFBO, GL_NONE);
-
     return true;
 }
 
 void Renderer::Render()
 {
-    // Bind uniforms
-    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, m_UBO);
-    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, m_LightUBO);
     // Render to depth map
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    // Bindings
+    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, m_UBO);
+    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, m_LightUBO);
+    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, frustumUBO);
     glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     for (auto it : entities) {
@@ -104,11 +110,23 @@ void Renderer::Render()
     for (auto it : entities) {
         it->Render();
     }
-    glBindTextureUnit(0, 0);
 
-    // Unbind uniforms
+    // Draw debug
+    glViewport((m_ViewportWidth * 3) / 4, (m_ViewportHeight * 3) / 4, (m_ViewportWidth * 1) / 4, (m_ViewportHeight * 1) / 4);
+    glScissor((m_ViewportWidth * 3) / 4, (m_ViewportHeight * 3) / 4, (m_ViewportWidth * 1) / 4, (m_ViewportHeight * 1) / 4);
+    glEnable(GL_SCISSOR_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindTextureUnit(0, m_depthMapTexture);
+    // Draw all entities
+    for (auto it : entities) {
+        it->Render();
+    }
+    glDisable(GL_SCISSOR_TEST);
+    // Unbind
+    glBindTextureUnit(0, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, 0);
+    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, 0);
 }
 
 void Renderer::Cleanup()
@@ -130,21 +148,7 @@ void Renderer::UpdateViewport(uint32_t width, uint32_t height)
     glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
     m_Camera->ComputeProjection(m_ViewportWidth, m_ViewportHeight);
 
-    m_UBOData->viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
-    m_UBOData->viewMatrix = m_Camera->GetViewMatrix();
-    m_UBOData->projectionMatrix = m_Camera->GetProjectionMatrix();
-    m_UBOData->lightDirViewSpace = m_UBOData->viewMatrix * m_UBOData->lightDir;
-
-    GL_CALL(glFlushMappedNamedBufferRange, m_UBO, 0, sizeof(UBOData));
-
-    // Update light UBO
-    m_LightUBOData->lightViewMatrix = glm::lookAt(
-        m_Camera->GetPosition(),
-        m_Camera->GetPosition() + m_UBOData->lightDir.xyz,
-        glm::vec3(0.0f, 1.0f, 0.0f)
-    );
-    m_LightUBOData->lightViewProjectionMatrix = m_LightUBOData->lightProjectionMatrix * m_LightUBOData->lightViewMatrix;
-    GL_CALL(glFlushMappedNamedBufferRange, m_LightUBO, 0, sizeof(LightUBOData));
+    UpdateCamera();
 }
 
 void Renderer::UpdateCamera()
@@ -152,8 +156,8 @@ void Renderer::UpdateCamera()
     m_UBOData->viewProjectionMatrix = m_Camera->GetViewProjectionMatrix();
     m_UBOData->viewMatrix = m_Camera->GetViewMatrix();
     m_UBOData->projectionMatrix = m_Camera->GetProjectionMatrix();
-
     m_UBOData->lightDirViewSpace = m_UBOData->viewMatrix * m_UBOData->lightDir;
+
     GL_CALL(glFlushMappedNamedBufferRange, m_UBO, 0, sizeof(UBOData));
 
     // Update light UBO
@@ -164,6 +168,9 @@ void Renderer::UpdateCamera()
     );
     m_LightUBOData->lightViewProjectionMatrix = m_LightUBOData->lightProjectionMatrix * m_LightUBOData->lightViewMatrix;
     GL_CALL(glFlushMappedNamedBufferRange, m_LightUBO, 0, sizeof(LightUBOData));
+
+    *frustumUBOData = createFrustumFromCamera(*m_Camera);
+    GL_CALL(glFlushMappedNamedBufferRange, frustumUBO, 0, sizeof(Frustum));
 }
 
 END_VISUALIZER_NAMESPACE
