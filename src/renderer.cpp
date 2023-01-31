@@ -30,7 +30,7 @@ bool Renderer::Initialize()
     uboData.lightDir = glm::normalize(glm::vec4(-lightPos, 0));
     uboData.lightDirViewSpace = uboData.viewMatrix * uboData.lightDir;
     uboData.ambiant = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-    uboData.diffuse = glm::vec4(0.9f, 0.9f, 0.9f, 1.0f);
+    uboData.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     glCreateBuffers(1, &m_UBO);
     glNamedBufferStorage(m_UBO, sizeof(UBOData), &uboData, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
@@ -52,19 +52,10 @@ bool Renderer::Initialize()
         GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 
     Frustum frustum = GenerateFrustumFromMainCam();
-    glCreateBuffers(1, &frustumUBO);
-    glNamedBufferStorage(frustumUBO, sizeof(Frustum), &frustum, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
-    frustumUBOData = (Frustum*)glMapNamedBufferRange(frustumUBO, 0, sizeof(Frustum),
+    glCreateBuffers(1, &m_frustumUBO);
+    glNamedBufferStorage(m_frustumUBO, sizeof(Frustum), &frustum, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+    m_frustumUBOData = (Frustum*)glMapNamedBufferRange(m_frustumUBO, 0, sizeof(Frustum),
         GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
-
-    // Add entities to list
-    entities.push_back(std::make_shared<Palms>());
-    entities.push_back(std::make_shared<Desert>());
-    // Load entities
-    for (auto it : entities) {
-        if (!it->Load())
-            return false;
-    }
 
     // Set clear color to something easier to distinguish
     glClearColor(0.1f, 0.1f, 0.3f, 1.f);
@@ -84,6 +75,37 @@ bool Renderer::Initialize()
     glNamedFramebufferTexture(m_depthMapFBO, GL_DEPTH_ATTACHMENT, m_depthMapTexture, 0);
     glNamedFramebufferDrawBuffer(m_depthMapFBO, GL_NONE);
     glNamedFramebufferReadBuffer(m_depthMapFBO, GL_NONE);
+
+    // Create hdr texture
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_HDRTexture);
+    glTextureStorage2D(m_HDRTexture, 1, GL_RGBA16F, m_ViewportWidth, m_ViewportHeight);
+    // Create depth render buffer
+    glCreateRenderbuffers(1, &m_depthRBO);
+    glNamedRenderbufferStorage(m_depthRBO, GL_DEPTH_COMPONENT, m_ViewportWidth, m_ViewportHeight);
+    // Create hdr frame buffer
+    glCreateFramebuffers(1, &m_HDRFBO);
+    glNamedFramebufferTexture(m_HDRFBO, GL_COLOR_ATTACHMENT0, m_HDRTexture, 0);
+    glNamedFramebufferRenderbuffer(m_HDRFBO, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthRBO);
+
+    // Load hdr shader
+    hdrShader = std::make_shared<Shader>();
+    if (!hdrShader->LoadShader("../../res/hdr.vert.glsl", GL_VERTEX_SHADER) ||
+        !hdrShader->LoadShader("../../res/hdr.frag.glsl", GL_FRAGMENT_SHADER) ||
+        !hdrShader->LinkProgram())
+        return false;
+
+    // Init VAO for HDR quad (no data because vertices are in shader)
+    glCreateVertexArrays(1, &m_VAO);
+
+    // Add entities to list
+    entities.push_back(std::make_shared<Palms>());
+    entities.push_back(std::make_shared<Desert>());
+    // Load entities
+    for (auto it : entities) {
+        if (!it->Load())
+            return false;
+    }
+
     return true;
 }
 
@@ -94,7 +116,7 @@ void Renderer::Render()
     // Bindings
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, m_UBO);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, m_LightUBO);
-    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, frustumUBO);
+    GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, m_frustumUBO);
     glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     for (auto it : entities) {
@@ -104,25 +126,55 @@ void Renderer::Render()
 
     // Normal render
     glViewport(0, 0, m_ViewportWidth, m_ViewportHeight);
-    GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_HDRFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindTextureUnit(0, m_depthMapTexture);
     // Draw all entities
     for (auto it : entities) {
         it->Render();
     }
+    glBindTextureUnit(0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Unbind uniforms
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 0, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 1, 0);
     GL_CALL(glBindBufferBase, GL_UNIFORM_BUFFER, 2, 0);
+    // Render quad with hdr texture
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    hdrShader->Use();
+    glBindTextureUnit(0, m_HDRTexture);
+    glBindVertexArray(m_VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    glBindTextureUnit(0, 0);
+    glUseProgram(0);
 }
 
 void Renderer::Cleanup()
 {
     m_UBOData = nullptr;
+    m_LightUBOData = nullptr;
+    m_frustumUBOData = nullptr;
 
+    // Unmap UBOS
     GL_CALL(glUnmapNamedBuffer, m_UBO);
+    GL_CALL(glUnmapNamedBuffer, m_LightUBO);
+    GL_CALL(glUnmapNamedBuffer, m_frustumUBO);
 
+    // Delete buffers
     GL_CALL(glDeleteBuffers, 1, &m_UBO);
+    GL_CALL(glDeleteBuffers, 1, &m_LightUBO);
+    GL_CALL(glDeleteBuffers, 1, &m_frustumUBO);
+    GL_CALL(glDeleteBuffers, 1, &m_depthMapFBO);
+    GL_CALL(glDeleteBuffers, 1, &m_HDRFBO);
+    GL_CALL(glDeleteBuffers, 1, &m_depthRBO);
+    GL_CALL(glDeleteBuffers, 1, &m_VAO);
 
+    // Delete textures
+    GL_CALL(glDeleteTextures, 1, &m_depthMapTexture);
+    GL_CALL(glDeleteTextures, 1, &m_HDRTexture);
+
+    // Clear entities
     entities.clear();
 }
 
@@ -144,7 +196,7 @@ void Renderer::UpdateCamera()
     m_UBOData->projectionMatrix = m_Camera->GetProjectionMatrix();
     m_UBOData->lightDirViewSpace = m_UBOData->viewMatrix * m_UBOData->lightDir;
 
-    GL_CALL(glFlushMappedNamedBufferRange, m_UBO, 0, sizeof(UBOData));
+    glFlushMappedNamedBufferRange(m_UBO, 0, sizeof(UBOData));
 
     // Update light UBO
     m_LightUBOData->lightViewMatrix = glm::lookAt(
@@ -153,10 +205,10 @@ void Renderer::UpdateCamera()
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
     m_LightUBOData->lightViewProjectionMatrix = m_LightUBOData->lightProjectionMatrix * m_LightUBOData->lightViewMatrix;
-    GL_CALL(glFlushMappedNamedBufferRange, m_LightUBO, 0, sizeof(LightUBOData));
+    glFlushMappedNamedBufferRange(m_LightUBO, 0, sizeof(LightUBOData));
 
-    *frustumUBOData = GenerateFrustumFromMainCam();
-    GL_CALL(glFlushMappedNamedBufferRange, frustumUBO, 0, sizeof(Frustum));
+    *m_frustumUBOData = GenerateFrustumFromMainCam();
+    glFlushMappedNamedBufferRange(m_frustumUBO, 0, sizeof(Frustum));
 }
 
 END_VISUALIZER_NAMESPACE

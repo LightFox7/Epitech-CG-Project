@@ -83,11 +83,12 @@ private:
     uint32_t m_ViewportWidth, m_ViewportHeight;
 
     // Custom variables
-    GLuint m_UBO, m_LightUBO, m_depthMapFBO, m_depthMapTexture, frustumUBO;
+    GLuint m_UBO, m_LightUBO, m_depthMapFBO, m_depthMapTexture, m_frustumUBO, m_HDRFBO, m_depthRBO, m_HDRTexture, m_VAO;
     UBOData* m_UBOData;
     LightUBOData* m_LightUBOData;
-    Frustum* frustumUBOData;
- 
+    Frustum* m_frustumUBOData;
+    std::shared_ptr<Shader> hdrShader;
+
     // Entities to render
     std::vector<std::shared_ptr<Entity>> entities;
 };
