@@ -225,9 +225,18 @@ bool Palms::Load()
 
 void Palms::Destroy()
 {
+	// Cleanup vertex arrays
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &VAO2);
+
+	// Cleanup buffers
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &VBO2);
 	glDeleteBuffers(1, &IBO);
+	glDeleteBuffers(1, &IBO2);
 	glDeleteBuffers(1, &SSBO);
+	glDeleteBuffers(1, &SSBO2);
+	glDeleteBuffers(1, &indirectBuffer);
 }
 
 void Palms::Render()

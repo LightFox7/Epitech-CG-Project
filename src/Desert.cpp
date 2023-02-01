@@ -81,6 +81,10 @@ bool Desert::Load()
 
 void Desert::Destroy()
 {
+    // Cleanup vertex array
+    glDeleteVertexArrays(1, &VAO);
+
+    // Cleanup buffers
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &IBO);
     glDeleteBuffers(1, &SSBO);

@@ -161,6 +161,9 @@ void Renderer::Cleanup()
     GL_CALL(glUnmapNamedBuffer, m_LightUBO);
     GL_CALL(glUnmapNamedBuffer, m_frustumUBO);
 
+    // Delete vertex array
+    GL_CALL(glDeleteVertexArrays, 1, &m_VAO);
+
     // Delete buffers
     GL_CALL(glDeleteBuffers, 1, &m_UBO);
     GL_CALL(glDeleteBuffers, 1, &m_LightUBO);
