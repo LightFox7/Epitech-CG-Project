@@ -57,6 +57,10 @@ public:
 
     void UpdateViewport(uint32_t width, uint32_t height);
     void UpdateCamera();
+
+    void ApplyBloom();
+    void RenderQuad();
+
     Frustum GenerateFrustumFromMainCam()
     {
         Frustum frustum;
@@ -83,10 +87,23 @@ private:
     uint32_t m_ViewportWidth, m_ViewportHeight;
 
     // Custom variables
-    GLuint m_UBO, m_LightUBO, m_depthMapFBO, m_depthMapTexture, m_frustumUBO, m_HDRFBO, m_depthRBO, m_HDRTexture, m_VAO;
+    // UBOs
+    GLuint m_UBO, m_LightUBO, m_frustumUBO;
     UBOData* m_UBOData;
     LightUBOData* m_LightUBOData;
     Frustum* m_frustumUBOData;
+    // FBOs & RBO
+    GLuint m_depthMapFBO, m_HDRFBO, m_depthRBO;
+    GLuint m_PingPongFBOs[2];
+    const unsigned int blur_iterations = 20;
+    // Textures
+    GLuint m_depthMapTexture, m_HDRTexture, m_BrightTexture;
+    GLuint m_PingPongTextures[2];
+    // VAO
+    GLuint m_VAO;
+
+    std::shared_ptr<Shader> separateShader;
+    std::shared_ptr<Shader> blurShader;
     std::shared_ptr<Shader> hdrShader;
 
     // Entities to render

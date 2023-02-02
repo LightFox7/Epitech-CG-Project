@@ -8,12 +8,15 @@ layout (location = 0) out vec4 color;
 
 // Uniforms
 layout (binding = 0) uniform sampler2D hdrBuffer;
+layout (binding = 1) uniform sampler2D bloomBlurBuffer;
 
 void main()
 {             
     vec3 hdrColor = texture(hdrBuffer, texCoords).rgb;
-    const float gamma = 1.1;
-    const float exposure = 2.0;
+    vec3 bloomColor = texture(bloomBlurBuffer, texCoords).rgb;
+    hdrColor += bloomColor; // additive blending
+    const float gamma = 1.2;
+    const float exposure = 2;
   
     // exposure tone mapping
     vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);

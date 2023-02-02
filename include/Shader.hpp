@@ -98,4 +98,11 @@ public:
     {
         glUseProgram(program);
     }
+
+    // Set uniforms
+    void SetInt(std::string const& str, GLint value)
+    {
+        GLint location = glGetUniformLocation(program, str.c_str());
+        glUniform1i(location, value);
+    }
 };

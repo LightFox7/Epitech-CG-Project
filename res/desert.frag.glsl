@@ -88,7 +88,7 @@ void main()
     if (texCoord.x < 0) texCoord.x = 1 + texCoord.x;
     if (texCoord.y < 0) texCoord.y = 1 + texCoord.y;
     // Set material color
-    vec3 materialColor = vec3(1.0, 0.95, 0.05);
+    vec3 materialColor = vec3(1.0, 0.75, 0.15);
     float noise = voronoise(texCoord * 64, 0.5, 0.5);
     materialColor = materialColor * (0.9 + noise * 0.3);
     // Compute diffuse lighting
