@@ -242,11 +242,12 @@ void Palms::Destroy()
 void Palms::Render()
 {
 	// Culling pass
+	int to_send = (palmCount + 64 - 1) / 64;
 	this->computeShader.Use();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO2);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, indirectBuffer);
-	glDispatchCompute(64, 1, 1);
+	glDispatchCompute(to_send, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
