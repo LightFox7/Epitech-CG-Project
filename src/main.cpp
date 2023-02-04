@@ -22,7 +22,7 @@ int32_t main(int32_t argc, char** argv)
 
     auto &window = visualizer::Window::GetInstance();
 
-    if (!window.InitWindow("3D Programming Course", 1280, 720, commandLineOptions))
+    if (!window.InitWindow("Modern 3D rendering with OpenGL", 1280, 720, commandLineOptions))
     {
         return EXIT_FAILURE;
     }
